@@ -5,15 +5,31 @@ import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 import CryptoKit
 
-/// Implementation of the `stringify` macro, which takes an expression
-/// of any type and produces a tuple containing the value of that expression
-/// and the source code that produced the value. For example
+/// A macro designed to help make static text more accessible by generating dynamically scaling text instead.
+/// To use `accessibleText`, reference it in a `View` body with a static string.
+/// - Note: While the string should be mostly static, you can use variables in it.
 ///
-///     #stringify(x + y)
+/// When you build your project, the compile script you added when setting up the macro will create/update `AccessibleTextContainer.swift` with text options for the string in your macro call.
 ///
-///  will expand to
+/// - Note: This will not be modified unless you change the string in the macro. You can change the text options that were generated without any concern.
 ///
-///     (x + y, "x + y")
+/// ## Example Use
+///
+///```swift
+/// struct ContentView: View {
+///    let name: String = "Morris"
+///    let feature = "accessibility"
+///    var body: some View {
+///        VStack {
+///            Image(systemName: "globe")
+///                .imageScale(.large)
+///                .foregroundStyle(.tint)
+///            #accessibleText("Hi \(name)! I am testing \(feature)")
+///        }
+///        .padding()
+///    }
+///}
+///```
 public struct AccessibleTextMacro: ExpressionMacro {
     public static func expansion(
         of node: some FreestandingMacroExpansionSyntax,
