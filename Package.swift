@@ -6,7 +6,7 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "AccessibleText",
-    platforms: [.macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6), .macCatalyst(.v13)],
+    platforms: [.macOS(.v13), .iOS(.v16), .tvOS(.v16), .watchOS(.v9), .macCatalyst(.v16)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
