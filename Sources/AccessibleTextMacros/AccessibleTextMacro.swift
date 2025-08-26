@@ -29,17 +29,8 @@ public struct AccessibleTextMacro: ExpressionMacro {
         guard let stringLiteral = argument.as(StringLiteralExprSyntax.self) else {
             throw "accessibleText requires a string literal as the first argument"
         }
-
-        // Extract the literal text for hashing
-        let rawString = stringLiteral.segments.map { segment -> String in
-            if let str = segment.as(StringSegmentSyntax.self) {
-                return str.content.text
-            } else {
-                return "\\(...)" // placeholder for interpolation
-            }
-        }.joined()
-
-        let hash = sha256(rawString)
+        
+        let hash = sha256(stringLiteral.description)
 
         // Build the base: AccessibleTextContainer
         let base = ExprSyntax(IdentifierExprSyntax(identifier: .identifier("AccessibleTextContainer")))
