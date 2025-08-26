@@ -19,24 +19,61 @@ public struct AccessibleTextMacro: ExpressionMacro {
         of node: some FreestandingMacroExpansionSyntax,
         in context: some MacroExpansionContext
     ) throws -> ExprSyntax {
-        
-        guard let argument = node.arguments.first?.expression,
-              let stringArg = argument.as(StringLiteralExprSyntax.self)?.segments.first?.description else {
-            throw "accessibleText requires a string literal"
+
+        // Ensure there is at least one argument
+        guard let argument = node.arguments.first?.expression else {
+            throw "accessibleText requires at least one string literal argument"
         }
-        
-        let hash = sha256(stringArg)
-        
-        // Build `AccessibleText.`<hash>``
-        let base = ExprSyntax(IdentifierExprSyntax(identifier: .identifier("AccessibleText")))
-        
+
+        // Make sure it is a string literal
+        guard let stringLiteral = argument.as(StringLiteralExprSyntax.self) else {
+            throw "accessibleText requires a string literal as the first argument"
+        }
+
+        // Extract the literal text for hashing
+        let rawString = stringLiteral.segments.map { segment -> String in
+            if let str = segment.as(StringSegmentSyntax.self) {
+                return str.content.text
+            } else {
+                return "\\(...)" // placeholder for interpolation
+            }
+        }.joined()
+
+        let hash = sha256(rawString)
+
+        // Build the base: AccessibleTextContainer
+        let base = ExprSyntax(IdentifierExprSyntax(identifier: .identifier("AccessibleTextContainer")))
+
         let member = MemberAccessExprSyntax(
             base: base,
             dot: .periodToken(),
-            name: .identifier("`\(hash)`") // backticks for safe identifier
+            name: .identifier("`\(hash)`") // hash with backticks
         )
-        
-        return ExprSyntax(member)
+
+        // Collect interpolated expressions from the string literal
+        let interpolations: [TupleExprElementSyntax] = stringLiteral.segments.flatMap { segment in
+            if let interp = segment.as(ExpressionSegmentSyntax.self) {
+                return interp.expressions.flatMap { syntax in
+                    TupleExprElementSyntax(expression: syntax.expression)
+                }
+            } else {
+                return []
+            }
+        }
+        let commaSeparatedInterpolations: [TupleExprElementSyntax] = interpolations.flatMap { syntax in
+            TupleExprElementSyntax(expression: syntax.expression, trailingComma: syntax == interpolations.last ? nil : .commaToken())
+        }
+            
+
+        // Build function call with interpolations
+        let callExpr = FunctionCallExprSyntax(
+            calledExpression: ExprSyntax(member),
+            leftParen: .leftParenToken(),
+            argumentList: TupleExprElementListSyntax(commaSeparatedInterpolations),
+            rightParen: .rightParenToken()
+        )
+
+        return ExprSyntax(callExpr)
     }
 }
 

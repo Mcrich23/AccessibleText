@@ -14,7 +14,7 @@ import SwiftUI
 
 @available(iOS 16.0, *)
 @freestanding(expression)
-public macro accessibleText(_ key: String) -> AccessibleTexts = #externalMacro(
+public macro accessibleText(_ key: LocalizedStringKey) -> AccessibleTexts = #externalMacro(
     module: "AccessibleTextMacros",
     type: "AccessibleTextMacro"
 )
