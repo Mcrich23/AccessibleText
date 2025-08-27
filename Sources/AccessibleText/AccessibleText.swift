@@ -37,7 +37,7 @@ public macro accessibleText(_ key: LocalizedStringKey) -> AccessibleTexts = #ext
 
 
 /// A macro designed to help make static NavigationTitles more accessible by generating dynamically scaling navigation titles instead.
-/// To use `accessibleText`, reference it in a `View` body with a static string.
+/// To use `accessibleNavigationTitle`, reference it in a `View` body with a static string.
 /// - Note: While the string should be mostly static, you can use variables in it.
 ///
 /// When you build your project, the compile script you added when setting up the macro will create/update `AccessibleTextContainer.swift` with text options for the string in your macro call.

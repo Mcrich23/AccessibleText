@@ -57,8 +57,10 @@ The run phase references the shell script from this package's source files and t
 2. Filter for `User Scripting Sandbox`
 3. Set `User Scripting Sandbox` to `No`
 
-## Using the Macro
-To use `accessibleText`, reference it in a `View` body with a static string.
+## Using the Macros
+
+### #accessibleText
+`accessibleText` is a dynamic text scaler for SwiftUI. To use `accessibleText`, reference it in a `View` body with a static string.
 
 > Note: While the string should be mostly static, you can use variables in it.
 
@@ -66,7 +68,7 @@ When you build your project, the compile script you added when setting up the ma
 
 > Note: This will not be modified unless you change the string in the macro. You can change the text options that were generated without any concern.
 
-### Example Use
+#### Example Use
 
 ```swift
 struct ContentView: View {
@@ -80,6 +82,37 @@ struct ContentView: View {
             #accessibleText("Hi \(name)! I am testing \(feature)")
         }
         .padding()
+    }
+}
+```
+
+### #accessibleNavigationTitle
+`accessibleNavigationTitle` dynamically scales the `navigationTitle` for its contents. To use `accessibleNavigationTitle`, reference it in a `View` body with a static string.
+
+> Note: While the string should be mostly static, you can use variables in it.
+
+When you build your project, the compile script you added when setting up the macro will create/update `AccessibleTextContainer.swift` with text options for the string in your macro call.
+
+> Note: This will not be modified unless you change the string in the macro. You can change the text options that were generated without any concern.
+
+ ## Example Use
+
+```swift
+ struct ContentView: View {
+    let name: String = "Morris"
+    let feature = "accessibility"
+    var body: some View {
+        #accessibleNavigationTitle("Hi \(name)! I am testing \(feature)", content: {
+            ScrollView {
+                VStack {
+                    Image(systemName: "globe")
+                        .imageScale(.large)
+                        .foregroundStyle(.tint)
+                    #accessibleText("Hi \(name)! I am testing \(feature)")
+                }
+                .padding()
+            }
+        })
     }
 }
 ```
