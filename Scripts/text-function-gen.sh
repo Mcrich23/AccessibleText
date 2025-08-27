@@ -44,7 +44,7 @@ brace_depth=0
 
 while IFS= read -r line; do
     # Match static var/func with optional access modifier, and ending with `_text` function name
-    if [[ "$line" =~ ^[[:space:]]*(private|public|internal|fileprivate)?[[:space:]]*static[[:space:]]+(var|func)[[:space:]]+\`([0-9a-f]{64})_text\` ]]; then
+    if [[ "$line" =~ ^[[:space:]]*(private|public|internal|fileprivate)?[[:space:]]+(var|func)[[:space:]]+\`([0-9a-f]{64})_text\` ]]; then
         func_hash="${BASH_REMATCH[3]}"
         if echo "$current_hashes" | grep -q "$func_hash"; then
             keep_func=1
@@ -91,7 +91,7 @@ while IFS= read -r file; do
         fi
 
         {
-            echo "    static func \`${hash}_text\`(_ args: any CVarArg...) -> AccessibleText.AccessibleTexts {"
+            echo "    func \`${hash}_text\`(_ args: any CVarArg...) -> AccessibleText.AccessibleTexts {"
             echo "        AccessibleText.AccessibleTexts(\`$hash\`(args))"
             echo "    }"
             echo
@@ -121,7 +121,7 @@ awk '
 /^}/ {inside=0; print; next}
 inside==1 {
     if (NF) {
-        if (match($0, /^ *static func /)) {
+        if (match($0, /^ *func /)) {
             if (!first_func) print ""   # blank line before each function except first
             first_func=0
         }

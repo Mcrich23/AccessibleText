@@ -100,7 +100,7 @@ keep_func=1
 brace_depth=0
 
 while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*(private|public|internal|fileprivate)?[[:space:]]*static[[:space:]]+(var|func)[[:space:]]+\`([0-9a-f]{64})\` ]]; then
+    if [[ "$line" =~ ^[[:space:]]*(private|public|internal|fileprivate)?[[:space:]]+(var|func)[[:space:]]+\`([0-9a-f]{64})\` ]]; then
         func_hash="${BASH_REMATCH[3]}"
         if echo "$current_hashes" | grep -q "$func_hash"; then
             keep_func=1
@@ -241,7 +241,7 @@ Original text: $text"
         placeholder_text=$(echo "$text" | sed -E 's/\\\([^)]*\)/%@/g')
 
         {
-            echo "    private static func \`$hash\`(_ args: any CVarArg...) -> [Text] {"
+            echo "    private func \`$hash\`(_ args: any CVarArg...) -> [Text] {"
             echo "        ["
             echo "            Text(String(format: \"$(echo "$text" | sed -E 's/\\\([^)]*\)/%@/g' | sed 's/"/\\"/g')\", arguments: args)),"
             for var in "${variations[@]}"; do
@@ -277,7 +277,7 @@ awk '
 /^}/ {inside=0; print; next}
 inside==1 {
     if (NF) {
-        if (match($0, /^ *static func /)) {
+        if (match($0, /^ *func /)) {
             if (!first_func) print ""   # blank line before each function except first
             first_func=0
         }

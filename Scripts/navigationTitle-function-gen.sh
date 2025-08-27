@@ -43,7 +43,7 @@ keep_func=1
 
 while IFS= read -r line; do
     # Match ONLY navigationTitle functions: `hash_navigationTitle`
-    if [[ "$line" =~ ^[[:space:]]*static\ (var|func)\ \`([0-9a-f]{64})_navigationTitle\` ]]; then
+    if [[ "$line" =~ ^[[:space:]]*(var|func)\ \`([0-9a-f]{64})_navigationTitle\` ]]; then
         func_hash="${BASH_REMATCH[2]}"   # just the 64-char hash part
         if echo "$current_hashes" | grep -q "$func_hash"; then
             keep_func=1
@@ -83,7 +83,7 @@ while IFS= read -r file; do
         fi
 
         {
-            echo "    static func \`${hash}_navigationTitle\`<Content: View>(_ args: any CVarArg..., @ViewBuilder content: () -> Content) -> AccessibleText.AccessibleNavigationTitles<Content> {"
+            echo "    func \`${hash}_navigationTitle\`<Content: View>(_ args: any CVarArg..., @ViewBuilder content: () -> Content) -> AccessibleText.AccessibleNavigationTitles<Content> {"
             echo "        AccessibleText.AccessibleNavigationTitles(\`$hash\`(args), content: content)"
             echo "    }"
             echo
@@ -113,7 +113,7 @@ awk '
 /^}/ {inside=0; print; next}
 inside==1 {
     if (NF) {
-        if (match($0, /^ *static func /)) {
+        if (match($0, /^ *func /)) {
             if (!first_func) print ""   # blank line before each function except first
             first_func=0
         }

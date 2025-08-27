@@ -48,7 +48,7 @@ public struct AccessibleTextMacro: ExpressionMacro {
         let hash = sha256(stringLiteral.description.dropFirst().dropLast())
 
         // Build the base: AccessibleTextContainer
-        let base = ExprSyntax(IdentifierExprSyntax(identifier: .identifier("AccessibleTextContainer")))
+        let base = ExprSyntax(IdentifierExprSyntax(baseName: .identifier("AccessibleTextContainer"), argumentNames: DeclNameArgumentsSyntax(leftParen: TokenSyntax.leftParenToken(), arguments: DeclNameArgumentListSyntax(), rightParen: TokenSyntax.rightParenToken())))
 
         let member = MemberAccessExprSyntax(
             base: base,
