@@ -25,10 +25,18 @@ start_lms_server() {
 }
 
 ensure_model_loaded() {
+    # Check if the model exists locally
+    if ! lms ls 2>/dev/null | grep -q "^$MODEL"; then
+        echo "Model $MODEL not found locally. Downloading..."
+        lms get "$MODEL" >/dev/null 2>&1
+        echo "Model $MODEL downloaded."
+    fi
+
+    # Check if the model is already loaded in the server
     if lms ps 2>/dev/null | grep -q "$MODEL"; then
         model_loaded_at_start=1   # model was already loaded
     else
-        echo "Model $MODEL not loaded. Loading..."
+        echo "Loading model $MODEL..."
         lms load "$MODEL" >/dev/null 2>&1
         echo "Model $MODEL loaded."
     fi
