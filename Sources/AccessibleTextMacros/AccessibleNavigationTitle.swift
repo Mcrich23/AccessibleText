@@ -29,20 +29,25 @@ import SwiftSyntaxMacros
 ///    }
 ///}
 ///```
-public struct AccessibleTextMacro: ExpressionMacro {
+public struct AccessibleNavigationTitleMacro: ExpressionMacro {
     public static func expansion(
         of node: some FreestandingMacroExpansionSyntax,
         in context: some MacroExpansionContext
     ) throws -> ExprSyntax {
-
+        
         // Ensure there is at least one argument
-        guard let argument = node.arguments.first?.expression else {
-            throw "accessibleText requires at least one string literal argument"
+        guard node.arguments.count >= 2 else {
+            throw "accessibleText requires at least two arguments"
         }
 
         // Make sure it is a string literal
-        guard let stringLiteral = argument.as(StringLiteralExprSyntax.self) else {
+        guard let stringLiteral = node.arguments.first?.expression.as(StringLiteralExprSyntax.self) else {
             throw "accessibleText requires a string literal as the first argument"
+        }
+
+        // Make sure it is a string literal
+        guard let viewBody = node.arguments.removingFirst().first?.expression.as(ClosureExprSyntax.self) else {
+            throw "accessibleText requires a view body as the second argument"
         }
         
         let hash = sha256(stringLiteral.description.dropFirst().dropLast())
@@ -53,29 +58,27 @@ public struct AccessibleTextMacro: ExpressionMacro {
         let member = MemberAccessExprSyntax(
             base: base,
             dot: .periodToken(),
-            name: .identifier("`\(hash)`") // hash with backticks
+            name: .identifier("`\(hash)_navigationTitle`") // hash with backticks
         )
 
         // Collect interpolated expressions from the string literal
         let interpolations: [TupleExprElementSyntax] = stringLiteral.segments.flatMap { segment in
             if let interp = segment.as(ExpressionSegmentSyntax.self) {
                 return interp.expressions.flatMap { syntax in
-                    TupleExprElementSyntax(expression: syntax.expression)
+                    TupleExprElementSyntax(expression: syntax.expression, trailingComma: .commaToken())
                 }
             } else {
                 return []
             }
         }
-        let commaSeparatedInterpolations: [TupleExprElementSyntax] = interpolations.flatMap { syntax in
-            TupleExprElementSyntax(expression: syntax.expression, trailingComma: syntax == interpolations.last ? nil : .commaToken())
-        }
+        let interpolationWithViewBody = interpolations + [TupleExprElementSyntax(label: "content", expression: viewBody)]
             
 
         // Build function call with interpolations
         let callExpr = FunctionCallExprSyntax(
             calledExpression: ExprSyntax(member),
             leftParen: .leftParenToken(),
-            argumentList: TupleExprElementListSyntax(commaSeparatedInterpolations),
+            argumentList: TupleExprElementListSyntax(interpolationWithViewBody),
             rightParen: .rightParenToken()
         )
 

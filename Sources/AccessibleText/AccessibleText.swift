@@ -34,3 +34,10 @@ public macro accessibleText(_ key: LocalizedStringKey) -> AccessibleTexts = #ext
     module: "AccessibleTextMacros",
     type: "AccessibleTextMacro"
 )
+
+@available(iOS 16.0, *)
+@freestanding(expression)
+public macro accessibleNavigationTitle<Content: View>(_ key: LocalizedStringKey, @ViewBuilder content: () -> Content) -> AccessibleNavigationTitles<Content> = #externalMacro(
+    module: "AccessibleTextMacros",
+    type: "AccessibleNavigationTitleMacro"
+)
