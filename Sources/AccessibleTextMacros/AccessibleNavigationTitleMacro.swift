@@ -4,7 +4,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// A macro designed to help make static text more accessible by generating dynamically scaling text instead.
+/// A macro designed to help make static NavigationTitles more accessible by generating dynamically scaling navigation titles instead.
 /// To use `accessibleText`, reference it in a `View` body with a static string.
 /// - Note: While the string should be mostly static, you can use variables in it.
 ///
@@ -19,13 +19,17 @@ import SwiftSyntaxMacros
 ///    let name: String = "Morris"
 ///    let feature = "accessibility"
 ///    var body: some View {
-///        VStack {
-///            Image(systemName: "globe")
-///                .imageScale(.large)
-///                .foregroundStyle(.tint)
-///            #accessibleText("Hi \(name)! I am testing \(feature)")
-///        }
-///        .padding()
+///        #accessibleNavigationTitle("Hi \(name)! I am testing \(feature)", content: {
+///            ScrollView {
+///                VStack {
+///                    Image(systemName: "globe")
+///                        .imageScale(.large)
+///                        .foregroundStyle(.tint)
+///                    #accessibleText("Hi \(name)! I am testing \(feature)")
+///                }
+///                .padding()
+///            }
+///        })
 ///    }
 ///}
 ///```
