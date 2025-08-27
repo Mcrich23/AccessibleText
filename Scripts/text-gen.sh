@@ -10,6 +10,9 @@ LMS_EXECUTABLE_PATH=${LMS_EXECUTABLE_PATH:-~/.lmstudio/bin/lms}
 # ----------------------------
 # Helper: Start LMS server if not running
 # ----------------------------
+server_started_by_script=0
+model_loaded_by_script=0
+        
 start_lms_server() {
     # Check LMS server status
     if ! lsof -i :1234 >/dev/null 2>&1; then
@@ -43,24 +46,6 @@ ensure_model_loaded() {
         return 0
     fi
 }
-
-# ----------------------------
-# Step 0a: Ensure LMS server is running
-# ----------------------------
-server_started_by_script=0
-if start_lms_server; then
-    server_started_by_script=1
-fi
-
-# ----------------------------
-# Step 0b: Ensure model is loaded
-# ----------------------------
-
-# Ensure model is loaded after starting server
-model_loaded_by_script=0
-if ensure_model_loaded; then
-    model_loaded_by_script=1
-fi
 
 # ----------------------------
 # Step 1: Ensure the struct file exists
@@ -176,6 +161,15 @@ while IFS= read -r file; do
         # Skip if it already exists
         if grep -q "$hash" "$STRUCT_FILE"; then
             continue
+        fi
+        
+        if start_lms_server; then
+            server_started_by_script=1
+        fi
+
+        # Ensure model is loaded after starting server
+        if ensure_model_loaded; then
+            model_loaded_by_script=1
         fi
 
         variations=()
