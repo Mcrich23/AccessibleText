@@ -153,15 +153,10 @@ while IFS= read -r file; do
         hash=$(printf "%s" "$text" | shasum -a 256 | awk '{print $1}')
         
         # Skip if already processed in this run or already exists in struct
-        if echo "$seen_hashes" | grep -q "$hash" || grep -q "$hash" "$STRUCT_FILE"; then
+        if echo "$seen_hashes" | grep -q "$hash" || grep -q "func \`$hash\`(" "$STRUCT_FILE"; then
             continue
         fi
         seen_hashes="$seen_hashes $hash"
-
-        # Skip if it already exists
-        if grep -q "$hash" "$STRUCT_FILE"; then
-            continue
-        fi
         
         if start_lms_server; then
             server_started_by_script=1
