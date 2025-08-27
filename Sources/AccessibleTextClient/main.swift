@@ -1,3 +1,4 @@
 import AccessibleText
 
-#accessibleText("Hello Morris. I am testing this accessibility feature!")
+let name = "Morris"
+#accessibleText("Hello \(name). I am testing this accessibility feature!")

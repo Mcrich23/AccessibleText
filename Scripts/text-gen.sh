@@ -85,7 +85,7 @@ while IFS= read -r file; do
 
     while IFS= read -r match; do
         # Use grep + Perl regex for literal capture (avoids sed escaping issues)
-        text=$(echo "$match" | perl -ne 'print "\"$1\"" if /#accessibleText\s*\("(.+)"\)/')
+        text=$(echo "$match" | perl -ne 'print "$1" if /#accessibleText\s*\("(.+)"\)/')
         # Hash the exact string
         hash=$(echo -n "$text" | shasum -a 256 | awk '{print $1}')
         current_hashes="$current_hashes $hash"
@@ -130,7 +130,7 @@ while IFS= read -r file; do
     [ "$file" = "$STRUCT_FILE" ] && continue
 
     while IFS= read -r match; do
-        text=$(echo "$match" | perl -ne 'print "\"$1\"" if /#accessibleText\s*\("(.+)"\)/')
+        text=$(echo "$match" | perl -ne 'print "$1" if /#accessibleText\s*\("(.+)"\)/')
         hash=$(printf "%s" "$text" | shasum -a 256 | awk '{print $1}')
 
         # Skip if it already exists
@@ -152,7 +152,7 @@ while IFS= read -r file; do
 7. If absolutely no valid shorter variation exists, you may generate fewer than 3, but otherwise produce at least 3.
 8. Do not duplicate variations.
 
-Original text: \"$text\""
+Original text: $text"
         payload=$(jq -n --arg model "$MODEL" --arg prompt "$PROMPT" '{
             model: $model,
             messages: [
@@ -164,7 +164,7 @@ Original text: \"$text\""
             stream: false
         }')
         response=$(curl -s "$LM_API_URL" -H "Content-Type: application/json" -d "$payload")
-        
+
         # Extract LLM content as a raw string
         raw_variations=$(echo "$response" | jq -r '.choices[0].message.content' 2>/dev/null)
 

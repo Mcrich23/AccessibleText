@@ -46,7 +46,7 @@ public struct AccessibleTextMacro: ExpressionMacro {
             throw "accessibleText requires a string literal as the first argument"
         }
         
-        let hash = sha256(stringLiteral.description)
+        let hash = sha256(stringLiteral.description.dropFirst().dropLast())
 
         // Build the base: AccessibleTextContainer
         let base = ExprSyntax(IdentifierExprSyntax(identifier: .identifier("AccessibleTextContainer")))
@@ -84,7 +84,18 @@ public struct AccessibleTextMacro: ExpressionMacro {
     }
 }
 
-extension String: @retroactive Error {}
+extension String: @retroactive Error {
+    func dropFirst(_ k: Int = 1) -> String {
+        var str = self
+        str.removeFirst(k)
+        return str
+    }
+    func dropLast(_ k: Int = 1) -> String {
+        var str = self
+        str.removeLast(k)
+        return str
+    }
+}
 
 @main
 struct AccessibleTextPlugin: CompilerPlugin {
