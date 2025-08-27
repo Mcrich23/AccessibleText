@@ -35,7 +35,7 @@ Before you can use this macro, you have to set it up with the project.
 ### Pull A Model
 AccessibleText uses [LM Studio](https://lmstudio.ai). It will use `qwen3:4b` unless otherwise specified with the environment variable `LM_STUDIO_MODEL`.
 
-> **Note: ** The model will automatically download if it is not already present on your machine.
+> Note: The model will automatically download if it is not already present on your machine.
 
 ### Add The Compile Script
 1. Go to your target's `Build Phases` tab and create a new `Run Script` phase.
@@ -60,11 +60,11 @@ The run phase references the shell script from this package's source files and t
 ## Using the Macro
 To use `accessibleText`, reference it in a `View` body with a static string.
 
-> **Note: ** While the string should be mostly static, you can use variables in it.
+> Note: While the string should be mostly static, you can use variables in it.
 
 When you build your project, the compile script you added when setting up the macro will create/update `AccessibleTextContainer.swift` with text options for the string in your macro call.
 
-> **Note: ** This will not be modified unless you change the string in the macro. You can change the text options that were generated without any concern.
+> Note: This will not be modified unless you change the string in the macro. You can change the text options that were generated without any concern.
 
 ### Example Use
 
