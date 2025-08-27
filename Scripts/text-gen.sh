@@ -105,7 +105,6 @@ while IFS= read -r file; do
 
     done < "$file"
 done < <(find "$DIR" -type f -name "*.swift")
-echo "CURRENT HASHES: $current_hashes"
 
 # ----------------------------
 # Step 3: Remove stale functions from AccessibleTextContainer.swift
@@ -317,4 +316,4 @@ fi
 # ----------------------------
 SH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 bash "$SH_DIR/navigationTitle-function-gen.sh" "$DIR"
-#bash "$SH_DIR/text-function-gen.sh" "$DIR"
+bash "$SH_DIR/text-function-gen.sh" "$DIR"
