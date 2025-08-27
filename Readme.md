@@ -95,7 +95,7 @@ When you build your project, the compile script you added when setting up the ma
 
 > Note: This will not be modified unless you change the string in the macro. You can change the text options that were generated without any concern.
 
- ## Example Use
+#### Example Use
 
 ```swift
  struct ContentView: View {
