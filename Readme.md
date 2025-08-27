@@ -32,6 +32,11 @@ targets: [
 ## Setup the Macro
 Before you can use this macro, you have to set it up with the project.
 
+### Pull A Model
+AccessibleText uses LM Studio. It will use `qwen3:4b` unless otherwise specified with the environment variable `LM_STUDIO_MODEL`.
+
+> **Note: ** The model will automatically download if it is not already present on your machine.
+
 ### Add The Compile Script
 1. Go to your target's `Build Phases` tab and create a new `Run Script` phase.
 2. Drag the phase to be above your `Compile Sources` phase

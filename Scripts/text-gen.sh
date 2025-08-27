@@ -6,7 +6,50 @@ LM_API_URL="http://localhost:1234/v1/chat/completions"
 MODEL="qwen/qwen3-4b-2507"
 
 # ----------------------------
-# Step 0: Ensure the struct file exists
+# Helper: Start LMS server if not running
+# ----------------------------
+start_lms_server() {
+    # Check LMS server status
+    if ! lsof -i :1234 >/dev/null 2>&1; then
+        echo "LMS server not running. Starting..."
+        lms server start >/dev/null 2>&1 &
+        # Wait until API responds
+        until curl -s "$LM_API_URL" >/dev/null 2>&1; do
+            sleep 1
+        done
+        echo "LMS server is up."
+        return 0  # Indicate we started it
+    fi
+    return 1  # Indicate it was already running
+}
+
+ensure_model_loaded() {
+    if lms ps 2>/dev/null | grep -q "$MODEL"; then
+        model_loaded_at_start=1   # model was already loaded
+    else
+        echo "Model $MODEL not loaded. Loading..."
+        lms load "$MODEL" >/dev/null 2>&1
+        echo "Model $MODEL loaded."
+    fi
+}
+
+# ----------------------------
+# Step 0a: Ensure LMS server is running
+# ----------------------------
+server_started_by_script=0
+if start_lms_server; then
+    server_started_by_script=1
+fi
+
+# ----------------------------
+# Step 0b: Ensure model is loaded
+# ----------------------------
+
+# Ensure model is loaded after starting server
+ensure_model_loaded
+
+# ----------------------------
+# Step 1: Ensure the struct file exists
 # ----------------------------
 if [ ! -f "$STRUCT_FILE" ]; then
     echo "Creating $STRUCT_FILE..."
@@ -21,7 +64,7 @@ EOL
 fi
 
 # ----------------------------
-# Step 1: Compute all current hashes in the codebase
+# Step 2: Compute all current hashes in the codebase
 # ----------------------------
 current_hashes=""
 while IFS= read -r file; do
@@ -37,7 +80,7 @@ while IFS= read -r file; do
 done < <(find "$DIR" -type f -name "*.swift")
 
 # ----------------------------
-# Step 2: Remove stale functions from AccessibleTextContainer.swift
+# Step 3: Remove stale functions from AccessibleTextContainer.swift
 # ----------------------------
 tmp_clean=$(mktemp)
 inside_func=0
@@ -67,7 +110,7 @@ done < "$STRUCT_FILE"
 mv "$tmp_clean" "$STRUCT_FILE"
 
 # ----------------------------
-# Step 3: Append new functions only
+# Step 4: Append new functions only
 # ----------------------------
 tmpfile=$(mktemp)
 while IFS= read -r file; do
@@ -167,7 +210,7 @@ Original text: \"$text\""
 done < <(find "$DIR" -type f -name "*.swift")
 
 # ----------------------------
-# Step 4: Append new functions safely before last closing brace
+# Step 5: Append new functions safely before last closing brace
 # ----------------------------
 if [ -s "$tmpfile" ]; then
     sed '$d' "$STRUCT_FILE" > "${STRUCT_FILE}.tmp"
@@ -180,7 +223,7 @@ fi
 rm "$tmpfile"
 
 # ----------------------------
-# Step 5: Normalize line breaks inside the struct properly
+# Step 6: Normalize line breaks inside the struct properly
 # ----------------------------
 awk '
 /struct AccessibleTextContainer *{/ {inside=1; print; first_func=1; next}
@@ -198,3 +241,19 @@ inside==1 {
 }
 {print}
 ' "$STRUCT_FILE" > "${STRUCT_FILE}.tmp" && mv "${STRUCT_FILE}.tmp" "$STRUCT_FILE"
+
+# ----------------------------
+# Step 7: Unload model if script loaded it
+# ----------------------------
+if [ "$model_loaded_at_start" -eq 1 ]; then
+    echo "Unloading model $MODEL loaded by this script..."
+    lms unload "$MODEL" >/dev/null 2>&1
+fi
+
+# ----------------------------
+# Step 8: Stop LMS server if we started it
+# ----------------------------
+if [ "$server_started_by_script" -eq 1 ]; then
+    echo "Stopping LMS server started by this script..."
+    lms server stop >/dev/null 2>&1
+fi
