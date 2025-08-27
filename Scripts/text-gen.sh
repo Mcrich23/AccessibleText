@@ -217,8 +217,13 @@ Original text: $text"
             done
             echo "        ]"
             echo "    }"
+            echo
             echo "    static func \`${hash}_text\`(_ args: any CVarArg...) -> AccessibleText.AccessibleTexts {"
             echo "        AccessibleText.AccessibleTexts(\`$hash\`(args))"
+            echo "    }"
+            echo
+            echo "    static func \`${hash}_navigationTitle\`<Content: View>(_ args: any CVarArg..., @ViewBuilder content: () -> Content) -> AccessibleText.AccessibleNavigationTitles<Content> {"
+            echo "        AccessibleText.AccessibleNavigationTitles(\`$hash\`(args), content: content)"
             echo "    }"
             echo
         } >> "$tmpfile"
