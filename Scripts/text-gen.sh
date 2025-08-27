@@ -28,7 +28,7 @@ ensure_model_loaded() {
     # Check if the model exists locally
     if ! lms ls 2>/dev/null | grep -q "^$MODEL"; then
         echo "Model $MODEL not found locally. Downloading..."
-        lms get "$MODEL" >/dev/null 2>&1
+        lms get "$MODEL" -y
         echo "Model $MODEL downloaded."
     fi
 
