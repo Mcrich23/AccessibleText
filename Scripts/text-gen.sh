@@ -5,6 +5,7 @@ STRUCT_FILE="$DIR/AccessibleTextContainer.swift"
 LM_API_URL="http://localhost:1234/v1/chat/completions"
 # Default model, can be overridden by LM_STUDIO_MODEL environment variable
 MODEL="${LM_STUDIO_MODEL:-qwen/qwen3-4b-2507}"
+LMS_EXECUTABLE_PATH=${LMS_EXECUTABLE_PATH:-~/.lmstudio/bin/lms}
 
 # ----------------------------
 # Helper: Start LMS server if not running
@@ -13,7 +14,7 @@ start_lms_server() {
     # Check LMS server status
     if ! lsof -i :1234 >/dev/null 2>&1; then
         echo "LMS server not running. Starting..."
-        lms server start >/dev/null 2>&1 &
+        $LMS_EXECUTABLE_PATH server start >/dev/null 2>&1 &
         # Wait until API responds
         until curl -s "$LM_API_URL" >/dev/null 2>&1; do
             sleep 1
@@ -26,18 +27,18 @@ start_lms_server() {
 
 ensure_model_loaded() {
     # Check if the model exists locally
-    if ! lms ls 2>/dev/null | grep -q "^$MODEL"; then
+    if ! $LMS_EXECUTABLE_PATH ls 2>/dev/null | grep -q "^$MODEL"; then
         echo "Model $MODEL not found locally. Downloading..."
-        lms get "$MODEL" -y
+        $LMS_EXECUTABLE_PATH get "$MODEL" -y
         echo "Model $MODEL downloaded."
     fi
 
     # Check if the model is already loaded in the server
-    if lms ps 2>/dev/null | grep -q "$MODEL"; then
+    if $LMS_EXECUTABLE_PATH ps 2>/dev/null | grep -q "$MODEL"; then
         return 1  # Indicate it was already loaded
     else
         echo "Loading model $MODEL..."
-        lms load "$MODEL" >/dev/null 2>&1
+        $LMS_EXECUTABLE_PATH load "$MODEL" >/dev/null 2>&1
         echo "Model $MODEL loaded."
         return 0
     fi
@@ -260,7 +261,7 @@ inside==1 {
 # ----------------------------
 if [ "$model_loaded_by_script" -eq 1 ]; then
     echo "Unloading model $MODEL loaded by this script..."
-    lms unload "$MODEL" >/dev/null 2>&1
+    $LMS_EXECUTABLE_PATH unload "$MODEL" >/dev/null 2>&1
 fi
 
 # ----------------------------
@@ -268,5 +269,5 @@ fi
 # ----------------------------
 if [ "$server_started_by_script" -eq 1 ]; then
     echo "Stopping LMS server started by this script..."
-    lms server stop >/dev/null 2>&1
+    $LMS_EXECUTABLE_PATH server stop >/dev/null 2>&1
 fi

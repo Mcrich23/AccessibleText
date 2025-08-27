@@ -33,7 +33,7 @@ targets: [
 Before you can use this macro, you have to set it up with the project.
 
 ### Pull A Model
-AccessibleText uses LM Studio. It will use `qwen3:4b` unless otherwise specified with the environment variable `LM_STUDIO_MODEL`.
+AccessibleText uses [LM Studio](https://lmstudio.ai). It will use `qwen3:4b` unless otherwise specified with the environment variable `LM_STUDIO_MODEL`.
 
 > **Note: ** The model will automatically download if it is not already present on your machine.
 
