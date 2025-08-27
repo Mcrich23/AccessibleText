@@ -34,11 +34,12 @@ ensure_model_loaded() {
 
     # Check if the model is already loaded in the server
     if lms ps 2>/dev/null | grep -q "$MODEL"; then
-        model_loaded_at_start=1   # model was already loaded
+        return 1  # Indicate it was already loaded
     else
         echo "Loading model $MODEL..."
         lms load "$MODEL" >/dev/null 2>&1
         echo "Model $MODEL loaded."
+        return 0
     fi
 }
 
@@ -55,7 +56,10 @@ fi
 # ----------------------------
 
 # Ensure model is loaded after starting server
-ensure_model_loaded
+model_loaded_by_script=0
+if ensure_model_loaded; then
+    model_loaded_by_script=1
+fi
 
 # ----------------------------
 # Step 1: Ensure the struct file exists
@@ -254,7 +258,7 @@ inside==1 {
 # ----------------------------
 # Step 7: Unload model if script loaded it
 # ----------------------------
-if [ "$model_loaded_at_start" -eq 1 ]; then
+if [ "$model_loaded_by_script" -eq 1 ]; then
     echo "Unloading model $MODEL loaded by this script..."
     lms unload "$MODEL" >/dev/null 2>&1
 fi
