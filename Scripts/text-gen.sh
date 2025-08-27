@@ -3,7 +3,8 @@
 DIR="${1:-.}"
 STRUCT_FILE="$DIR/AccessibleTextContainer.swift"
 LM_API_URL="http://localhost:1234/v1/chat/completions"
-MODEL="qwen/qwen3-4b-2507"
+# Default model, can be overridden by LM_STUDIO_MODEL environment variable
+MODEL="${LM_STUDIO_MODEL:-qwen/qwen3-4b-2507}"
 
 # ----------------------------
 # Helper: Start LMS server if not running
