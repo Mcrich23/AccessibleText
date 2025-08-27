@@ -208,7 +208,7 @@ Original text: $text"
         placeholder_text=$(echo "$text" | sed -E 's/\\\([^)]*\)/%@/g')
 
         {
-            echo "    static func \`$hash\`(_ args: any CVarArg...) -> AccessibleText.AccessibleTexts {"
+            echo "    static func \`$hash\`(_ args: any CVarArg...) -> [Text] {"
             echo "        ["
             echo "            Text(String(format: \"$(echo "$placeholder_text" | sed 's/"/\\"/g')\", arguments: args)),"
             for var in "${variations[@]}"; do
@@ -216,6 +216,9 @@ Original text: $text"
                 echo "            Text(String(format: \"$(echo "$var_placeholder" | sed 's/"/\\"/g')\", arguments: args)),"
             done
             echo "        ]"
+            echo "    }"
+            echo "    static func \`${hash}_text\`(_ args: any CVarArg...) -> AccessibleText.AccessibleTexts {"
+            echo "        AccessibleText.AccessibleTexts(\`$hash\`(args))"
             echo "    }"
             echo
         } >> "$tmpfile"

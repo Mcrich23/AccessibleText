@@ -53,7 +53,7 @@ public struct AccessibleTextMacro: ExpressionMacro {
         let member = MemberAccessExprSyntax(
             base: base,
             dot: .periodToken(),
-            name: .identifier("`\(hash)`") // hash with backticks
+            name: .identifier("`\(hash)_text`") // hash with backticks
         )
 
         // Collect interpolated expressions from the string literal
