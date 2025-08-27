@@ -84,14 +84,28 @@ current_hashes=""
 while IFS= read -r file; do
     [ "$file" = "$STRUCT_FILE" ] && continue
 
-    while IFS= read -r match; do
-        # Use grep + Perl regex for literal capture (avoids sed escaping issues)
-        text=$(echo "$match" | perl -ne 'print "$1" if /#accessibleText\s*\("(.+)"\)/')
+    # Read the file line by line
+    while IFS= read -r line; do
+        text=""
+
+        # Extract #accessibleText("...")
+        text=$(echo "$line" | perl -ne 'print "$1\n" if /#accessibleText\s*\("(.+?)"\)/')
+
+        # If nothing, try #accessibleNavigationTitle("...", content:
+        if [ -z "$text" ]; then
+            text=$(echo "$line" | perl -ne 'print "$1\n" if /#accessibleNavigationTitle\s*\("(.+?)"\s*,\s*content:/')
+        fi
+
+        # Skip empty matches
+        [ -z "$text" ] && continue
+
         # Hash the exact string
         hash=$(echo -n "$text" | shasum -a 256 | awk '{print $1}')
         current_hashes="$current_hashes $hash"
-    done < <(grep -o '#accessibleText *(".*")' "$file")
+
+    done < "$file"
 done < <(find "$DIR" -type f -name "*.swift")
+echo "CURRENT HASHES: $current_hashes"
 
 # ----------------------------
 # Step 3: Remove stale functions from AccessibleTextContainer.swift
@@ -99,21 +113,28 @@ done < <(find "$DIR" -type f -name "*.swift")
 tmp_clean=$(mktemp)
 inside_func=0
 keep_func=1
+brace_depth=0
 
 while IFS= read -r line; do
-    if [[ "$line" =~ ^[[:space:]]*static\ (var|func)\ \`([0-9a-f]{64})\` ]]; then
-        func_hash="${BASH_REMATCH[2]}"
+    if [[ "$line" =~ ^[[:space:]]*(private|public|internal|fileprivate)?[[:space:]]*static[[:space:]]+(var|func)[[:space:]]+\`([0-9a-f]{64})\` ]]; then
+        func_hash="${BASH_REMATCH[3]}"
         if echo "$current_hashes" | grep -q "$func_hash"; then
             keep_func=1
         else
             keep_func=0
         fi
         inside_func=1
+        brace_depth=0
     fi
 
     if [ "$inside_func" -eq 1 ] && [ "$keep_func" -eq 0 ]; then
-        if [[ "$line" =~ ^[[:space:]]*\}$ ]]; then
+        # Track opening and closing braces
+        brace_depth=$((brace_depth + $(grep -o "{" <<< "$line" | wc -l)))
+        brace_depth=$((brace_depth - $(grep -o "}" <<< "$line" | wc -l)))
+
+        if [ "$brace_depth" -le 0 ]; then
             inside_func=0
+            keep_func=1
         fi
         continue
     fi
@@ -127,12 +148,31 @@ mv "$tmp_clean" "$STRUCT_FILE"
 # Step 4: Append new functions only
 # ----------------------------
 tmpfile=$(mktemp)
+seen_hashes=""
+
 while IFS= read -r file; do
     [ "$file" = "$STRUCT_FILE" ] && continue
 
+    # Read lines containing either #accessibleText or #accessibleNavigationTitle
     while IFS= read -r match; do
-        text=$(echo "$match" | perl -ne 'print "$1" if /#accessibleText\s*\("(.+)"\)/')
+        text=""
+
+        if [[ "$match" == *"#accessibleText("* ]]; then
+            # Extract quoted string from #accessibleText("...")
+            text=$(echo "$match" | perl -ne 'print "$1" if /#accessibleText\s*\("(.+?)"\)/')
+        elif [[ "$match" == *"#accessibleNavigationTitle("* ]]; then
+            # Extract quoted string from #accessibleNavigationTitle("...", content:
+            text=$(echo "$match" | perl -ne 'print "$1" if /#accessibleNavigationTitle\s*\("(.+?)"\s*,\s*content:/')
+        fi
+        [ -z "$text" ] && continue  # skip if nothing found
+
         hash=$(printf "%s" "$text" | shasum -a 256 | awk '{print $1}')
+        
+        # Skip if already processed in this run or already exists in struct
+        if echo "$seen_hashes" | grep -q "$hash" || grep -q "$hash" "$STRUCT_FILE"; then
+            continue
+        fi
+        seen_hashes="$seen_hashes $hash"
 
         # Skip if it already exists
         if grep -q "$hash" "$STRUCT_FILE"; then
@@ -208,9 +248,9 @@ Original text: $text"
         placeholder_text=$(echo "$text" | sed -E 's/\\\([^)]*\)/%@/g')
 
         {
-            echo "    static func \`$hash\`(_ args: any CVarArg...) -> [Text] {"
+            echo "    private static func \`$hash\`(_ args: any CVarArg...) -> [Text] {"
             echo "        ["
-            echo "            Text(String(format: \"$(echo "$placeholder_text" | sed 's/"/\\"/g')\", arguments: args)),"
+            echo "            Text(String(format: \"$(echo "$text" | sed -E 's/\\\([^)]*\)/%@/g' | sed 's/"/\\"/g')\", arguments: args)),"
             for var in "${variations[@]}"; do
                 var_placeholder=$(echo "$var" | sed -E 's/\\\([^)]*\)/%@/g')
                 echo "            Text(String(format: \"$(echo "$var_placeholder" | sed 's/"/\\"/g')\", arguments: args)),"
@@ -218,17 +258,9 @@ Original text: $text"
             echo "        ]"
             echo "    }"
             echo
-            echo "    static func \`${hash}_text\`(_ args: any CVarArg...) -> AccessibleText.AccessibleTexts {"
-            echo "        AccessibleText.AccessibleTexts(\`$hash\`(args))"
-            echo "    }"
-            echo
-            echo "    static func \`${hash}_navigationTitle\`<Content: View>(_ args: any CVarArg..., @ViewBuilder content: () -> Content) -> AccessibleText.AccessibleNavigationTitles<Content> {"
-            echo "        AccessibleText.AccessibleNavigationTitles(\`$hash\`(args), content: content)"
-            echo "    }"
-            echo
         } >> "$tmpfile"
 
-    done < <(grep -o '#accessibleText *(".*")' "$file")
+    done < <(grep -E '#accessibleText|#accessibleNavigationTitle' "$file")
 done < <(find "$DIR" -type f -name "*.swift")
 
 # ----------------------------
@@ -279,3 +311,10 @@ if [ "$server_started_by_script" -eq 1 ]; then
     echo "Stopping LMS server started by this script..."
     $LMS_EXECUTABLE_PATH server stop >/dev/null 2>&1
 fi
+
+# ----------------------------
+# Step 9: Generate text and navigationTitle functions
+# ----------------------------
+SH_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+bash "$SH_DIR/navigationTitle-function-gen.sh" "$DIR"
+#bash "$SH_DIR/text-function-gen.sh" "$DIR"
