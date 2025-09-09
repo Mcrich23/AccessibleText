@@ -50,6 +50,8 @@ bash "$base_url/SourcePackages/checkouts/AccessibleText/Scripts/text-gen.sh" "$S
 ```
 5. Replace `<Target Folder>` with the folder that contains the code for the target.
 
+> Note: You can also override the default prompt by setting the `PROMPT_INSTRUCTIONS` environment variable.
+
 ### Disable User Scripting Sandbox
 The run phase references the shell script from this package's source files and then creates a file in your project. To do this, you must disable `User Scripting Sandbox`.
 
