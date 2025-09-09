@@ -170,16 +170,33 @@ while IFS= read -r file; do
         variations=()
 
         # Generate LM variations preserving Swift string interpolations
-        PROMPT="You are generating alternative text variations for UI display. Follow these rules:
+        DEFAULT_PROMPT="You are a generator of short, UI-ready Swift string alternatives. When given an input Swift string, produce 3–5 progressively shorter, natural-sounding variations suitable for display in a user interface.
 
-1. Generate between 3 and 5 **progressively** shorter variations of the input text.
-2. Preserve all Swift string interpolations (e.g., \\(name), \\(count)) exactly as they appear in the original string.
-3. You may remove interpolations if it makes sense in the shorter variation.
-4. Do not add new interpolations.
-5. Variations must be natural to read and suitable for a real user interface.
-6. Respond only as a JSON array of strings.
-7. If absolutely no valid shorter variation exists, you may generate fewer than 3, but otherwise produce at least 3.
-8. Do not duplicate variations.
+Rules:
+1. Produce between 3 and 5 variations. If absolutely no valid shorter variation exists, produce fewer than 3 only as a last resort.
+2. Order variations from longest (most detailed) to shortest (most concise).
+3. Preserve all original Swift string interpolations exactly as they appear (e.g. \(name), \(count)). Keep backslashes and parentheses intact.
+4. You may remove interpolations when doing so produces a natural, shorter string (for example dropping a greeting or optional context).
+5. You may MERGE adjacent date/time-style interpolations into a single combined interpolation **only** when both clearly represent a date and a time (e.g., \(date) + \(time) → \(datetime)). Do not invent other merged tokens.
+6. Do not add any new interpolations except the allowed merged \(datetime) token described above.
+7. Keep punctuation and grammar correct. Use shorter synonyms and rephrase to shorten, but keep meaning intact.
+8. Do not duplicate variations; ensure each output string is distinct.
+9. Output must be exactly a JSON array of strings (e.g. ["...","...", "..."]) and nothing else — no explanation, no comments, no extra keys.
+10. If the original text already contains multiple forms (e.g., both date/time and datetime), prefer preserving the original tokens unless merging produces a clearer, shorter UI string.
+
+Example of the desired pattern (for guidance only — DO NOT include this example in your final output; it's shown here to illustrate the style):
+Original swift string:
+\"Hello \(name)! Your event is on \(date) at \(time)\"
+Desired generated array (longest → shortest):
+[
+  \"Hi \(name)! Your event is on \(date) at \(time)\",
+  \"Your event is on \(date) at \(time)\",
+  \"Your event is at \(datetime)\",
+  \"Hi \(name)! Your event is at \(datetime)\",
+  \"Event at \(datetime)\"
+]"
+
+        PROMPT="${PROMPT_INSTRUCTIONS:-$DEFAULT_PROMPT}
 
 Original text: $text"
         payload=$(jq -n --arg model "$MODEL" --arg prompt "$PROMPT" '{
