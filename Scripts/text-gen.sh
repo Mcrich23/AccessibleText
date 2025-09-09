@@ -211,20 +211,28 @@ Original text: $text"
         }')
         response=$(curl -s "$LM_API_URL" -H "Content-Type: application/json" -d "$payload")
 
-        # Extract LLM content as a raw string
-        raw_variations=$(echo "$response" | jq -r '.choices[0].message.content' 2>/dev/null)
-
-        # Remove leading/trailing brackets
-        raw_variations=${raw_variations#\[}
-        raw_variations=${raw_variations%\]}
-
-        # Split by comma into array
-        IFS=',' read -r -a variations <<< "$raw_variations"
-
-        # Trim quotes and whitespace from each LLM-generated element
-        for i in "${!variations[@]}"; do
-            variations[$i]=$(echo "${variations[$i]}" | sed -E 's/^ *"(.*)" *$/\1/')
-        done
+        # Extract LLM content and parse JSON array properly
+        variations=()
+        content=$(echo "$response" | jq -r '.choices[0].message.content' 2>/dev/null)
+        
+        # Use a more robust approach - extract variations using sed and awk
+        # Remove the outer brackets and split by lines that start with quotes
+        temp_file=$(mktemp)
+        echo "$content" > "$temp_file"
+        
+        # Extract each quoted string from the array
+        while IFS= read -r line; do
+            # Look for lines that contain quoted strings
+            if echo "$line" | grep -q '^[[:space:]]*"[^"]*"'; then
+                # Extract the content between quotes
+                variation=$(echo "$line" | sed -E 's/^[[:space:]]*"([^"]*)"[[:space:]]*,?[[:space:]]*$/\1/')
+                if [ -n "$variation" ]; then
+                    variations+=("$variation")
+                fi
+            fi
+        done < "$temp_file"
+        
+        rm "$temp_file"
 
         # --- Deduplicate and exclude the original ---
         placeholder_text=$(echo "$text" | sed -E 's/\\\([^)]*\)/%@/g')
